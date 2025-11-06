@@ -26,7 +26,7 @@ const Admin = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await api.get('/api/admin/dashboard');
+        const response = await api.get('/admin/dashboard');
         setDashboardData(response.data);
       } catch (error) {
         toast.error('Failed to load dashboard data');
@@ -44,7 +44,7 @@ const Admin = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await api.get('/api/admin/users');
+        const response = await api.get('/admin/users');
         setUsers(response.data);
       } catch (error) {
         toast.error('Failed to load users');
@@ -60,7 +60,7 @@ const Admin = () => {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const response = await api.get('/api/admin/contacts');
+        const response = await api.get('/admin/contacts');
         setContacts(response.data);
       } catch (error) {
         toast.error('Failed to load contacts');
@@ -75,9 +75,9 @@ const Admin = () => {
   // Handle contact response
   const handleContactResponse = async (contactId, response, status) => {
     try {
-      await api.patch(`/api/admin/contacts/${contactId}`, { response, status });
+      await api.patch(`/admin/contacts/${contactId}`, { response, status });
       toast.success('Contact updated successfully');
-      const newResponse = await api.get('/api/admin/contacts');
+      const newResponse = await api.get('/admin/contacts');
       setContacts(newResponse.data);
     } catch (error) {
       toast.error('Failed to update contact');

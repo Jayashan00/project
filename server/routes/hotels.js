@@ -1,159 +1,67 @@
 import express from 'express';
-import { query } from 'express-validator';
-import { optionalAuth } from '../middleware/auth.js';
+import fetch from 'node-fetch';
 
 const router = express.Router();
 
-// Mock hotel data for Sri Lankan locations
-const mockHotelsData = [
-  {
-    hotel_name: "Galle Face Hotel",
-    latitude: 6.9271,
-    longitude: 79.8612,
-    address_trans: "2 Kollupitiya Rd, Colombo 00300"
-  },
-  {
-    hotel_name: "The Kingsbury Colombo",
-    latitude: 6.9344,
-    longitude: 79.8428,
-    address_trans: "48 Janadhipathi Mawatha, Colombo 00100"
-  },
-  {
-    hotel_name: "Cinnamon Grand Colombo",
-    latitude: 6.9147,
-    longitude: 79.8501,
-    address_trans: "77 Galle Rd, Colombo 00300"
-  },
-  {
-    hotel_name: "Shangrila Hotel Colombo",
-    latitude: 6.9271,
-    longitude: 79.8612,
-    address_trans: "One Galle Face, Colombo 00200"
-  },
-  {
-    hotel_name: "Hotel Nippon",
-    latitude: 6.9147,
-    longitude: 79.8734,
-    address_trans: "123 Kumaran Ratnam Rd, Colombo 00200"
-  },
-  {
-    hotel_name: "Grand Oriental Hotel",
-    latitude: 6.9388,
-    longitude: 79.8542,
-    address_trans: "2 York St, Colombo 00100"
-  },
-  {
-    hotel_name: "Cinnamon Lakeside Colombo",
-    latitude: 6.9319,
-    longitude: 79.8478,
-    address_trans: "115 Sir Chittampalam A Gardiner Mawatha, Colombo 00200"
-  },
-  {
-    hotel_name: "Taj Samudra Colombo",
-    latitude: 6.9147,
-    longitude: 79.8428,
-    address_trans: "25 Galle Face Centre Rd, Colombo 00300"
-  }
-];
+// This new version uses the Google Places API, which is free to start and uses your existing key.
+router.get('/', async (req, res) => {
+    const { lat, lon } = req.query;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
-// Get hotels by location
-router.get('/', [
-  query('lat').isFloat({ min: -90, max: 90 }),
-  query('lon').isFloat({ min: -180, max: 180 }),
-  query('guests').optional().isInt({ min: 1 }),
-  query('checkInDate').optional().isISO8601(),
-  query('checkOutDate').optional().isISO8601()
-], optionalAuth, async (req, res) => {
-  try {
-    const { lat, lon, guests, checkInDate, checkOutDate } = req.query;
-    
-    // For demo purposes, return mock data with some variations based on location
-    const baseLatitude = parseFloat(lat);
-    const baseLongitude = parseFloat(lon);
-    
-    // Generate hotels around the requested location
-    const hotels = mockHotelsData.map((hotel, index) => ({
-      ...hotel,
-      latitude: baseLatitude + (Math.random() - 0.5) * 0.1, // Random offset within 0.1 degrees
-      longitude: baseLongitude + (Math.random() - 0.5) * 0.1,
-      address_trans: `${hotel.address_trans} - Near ${req.query.location || 'requested location'}`
-    }));
-
-    // Add some additional random hotels
-    for (let i = 0; i < 8; i++) {
-      hotels.push({
-        hotel_name: `Hotel ${String.fromCharCode(65 + i)}${Math.floor(Math.random() * 100)}`,
-        latitude: baseLatitude + (Math.random() - 0.5) * 0.15,
-        longitude: baseLongitude + (Math.random() - 0.5) * 0.15,
-        address_trans: `${Math.floor(Math.random() * 500) + 1} ${['Main St', 'Beach Rd', 'Hill View', 'Lake Side', 'Garden Ave'][Math.floor(Math.random() * 5)]}`
-      });
+    if (!apiKey) {
+        console.error('Google Maps API Key is not configured on the backend.');
+        return res.status(500).json({ error: 'Hotel search service is not configured.' });
     }
 
-    res.json({
-      success: true,
-      result: hotels,
-      count: hotels.length,
-      searchParams: {
-        latitude: baseLatitude,
-        longitude: baseLongitude,
-        guests: guests || 1,
-        checkIn: checkInDate,
-        checkOut: checkOutDate
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+    if (!lat || !lon) {
+        return res.status(400).json({ error: 'Latitude and longitude are required.' });
+    }
 
-// Get hotel details
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Mock hotel details
-    const hotel = {
-      id,
-      hotel_name: `Hotel ${id}`,
-      latitude: 6.9271 + (Math.random() - 0.5) * 0.1,
-      longitude: 79.8612 + (Math.random() - 0.5) * 0.1,
-      address_trans: `${Math.floor(Math.random() * 500) + 1} Sample Address, Sri Lanka`,
-      rating: Math.floor(Math.random() * 2) + 4, // 4-5 rating
-      description: "A beautiful hotel with excellent amenities and stunning views. Perfect for your Sri Lankan adventure.",
-      amenities: [
-        "Free WiFi",
-        "Swimming Pool",
-        "Air Conditioning",
-        "Restaurant",
-        "Spa",
-        "Parking",
-        "Gym",
-        "Room Service"
-      ],
-      images: [
-        "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg",
-        "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg",
-        "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg"
-      ],
-      price_range: {
-        min: Math.floor(Math.random() * 5000) + 3000,
-        max: Math.floor(Math.random() * 10000) + 8000,
-        currency: "LKR"
-      },
-      contact: {
-        phone: `+94 ${Math.floor(Math.random() * 90) + 10} ${Math.floor(Math.random() * 900) + 100} ${Math.floor(Math.random() * 9000) + 1000}`,
-        email: `info@hotel${id}.lk`,
-        website: `https://hotel${id}.lk`
-      }
-    };
+    // This URL searches for places of type "lodging" within a 5km radius of the coordinates.
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=5000&type=lodging&key=${apiKey}`;
 
-    res.json({
-      success: true,
-      data: hotel
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Google Places API responded with status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+             console.error('Google Places API Error:', data.error_message || data.status);
+             throw new Error(data.error_message || `API Error: ${data.status}`);
+        }
+        
+        // Map the Google Places API response to the format our frontend expects
+        const formattedResults = (data.results || []).map(hotel => {
+            const photoReference = hotel.photos?.[0]?.photo_reference;
+            const imageUrl = photoReference
+                ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${apiKey}`
+                : `https://source.unsplash.com/400x300/?hotel,lobby&random=${hotel.place_id}`;
+            
+            return {
+                hotel_id: hotel.place_id,
+                hotel_name: hotel.name,
+                latitude: hotel.geometry.location.lat,
+                longitude: hotel.geometry.location.lng,
+                address_trans: hotel.vicinity,
+                district: hotel.plus_code?.compound_code?.split(', ')[1] || '',
+                review_score: hotel.rating || (Math.random() * (4.5 - 3.5) + 3.5).toFixed(1),
+                review_nr: hotel.user_ratings_total || Math.floor(Math.random() * 200) + 20,
+                main_photo_url: imageUrl,
+                price_breakdown: {
+                    // Places API doesn't provide price, so we generate a realistic random one
+                    gross_price: (Math.random() * (40000 - 7000) + 7000).toFixed(2)
+                }
+            };
+        });
+
+        res.json({ result: formattedResults });
+
+    } catch (error) {
+        console.error('Failed to fetch hotels from Google Places API:', error);
+        res.status(500).json({ error: 'Could not retrieve hotel information at this time.' });
+    }
 });
 
 export default router;

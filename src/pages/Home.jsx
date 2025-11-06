@@ -12,7 +12,8 @@ import {
     TrendingUp,
     PlayCircle,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Heart
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -67,7 +68,7 @@ const Home = () => {
         const fetchFeatured = async () => {
             try {
                 setLoading(true);
-                const response = await api.get('/api/destinations/featured');
+                const response = await api.get('/destinations/featured');
                 // *** FIX IMPLEMENTED HERE ***
                 // The API returns an object { data: [...] }, so we need to access the .data property.
                 // We also check if the response is an array before setting the state.

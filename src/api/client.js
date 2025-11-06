@@ -1,10 +1,9 @@
 import axios from 'axios';
 
-// *** THE CRITICAL FIX IS HERE ***
-// All API requests will now be correctly prefixed with /api,
-// which allows the Nginx proxy to forward them to the backend.
+// The baseURL is set to '/', which is the root of the server.
+// The Vite proxy will correctly intercept calls starting with '/api'.
 const api = axios.create({
-    baseURL: '/api', // Use the /api prefix for all requests
+    baseURL: '/api', 
     timeout: 15000,
     withCredentials: true,
     headers: {
@@ -12,7 +11,7 @@ const api = axios.create({
     }
 });
 
-// Request interceptor for API calls
+// Add a request interceptor to include the auth token
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');

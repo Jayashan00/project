@@ -175,7 +175,7 @@ const SubscriptionPlans = () => {
   useEffect(() => {
     const fetchCurrentSubscription = async () => {
       try {
-        const response = await api.get('/api/users/me');
+        const response = await api.get('/users/me');
         setCurrentPlan(response.data.user.subscription.plan);
       } catch (error) {
         console.error('Error fetching subscription:', error);
@@ -205,7 +205,7 @@ const SubscriptionPlans = () => {
   const handleSubscribe = async (planName) => {
     setIsLoading(true);
     try {
-      const response = await api.post('/api/subscriptions/create', {
+      const response = await api.post('/subscriptions/create', {
         plan: planName.toLowerCase()
       });
 

@@ -10,33 +10,7 @@ db.createCollection('blogs');
 db.createCollection('galleries');
 db.createCollection('subscriptions');
 
-
-// Create default admin user if one doesn't exist
-if (db.users.countDocuments({ email: "admin@gmail.com" }) === 0) {
-    db.users.insertOne({
-        username: "admin",
-        email: "admin@gmail.com",
-        password: "$2a$10$6Bnv6HxkxLpopsxnDv.xvOF7RxsOqfLilr5k1QfNEIqBGmdUqQaUi", // hashed version of admin123
-        firstName: "Admin",
-        lastName: "User",
-        role: "admin", // Ensure role is set
-        verified: true,
-        disabled: false,
-        subscription: {
-            plan: "premium",
-            status: "active",
-            startDate: new Date(),
-            endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 5)) // 5 years
-        },
-        createdAt: new Date(),
-        updatedAt: new Date()
-    });
-}
-
-
-// Note: Indexes are now managed by Mongoose schemas to avoid duplication warnings.
-
-// Insert sample data if collections are empty
+// Insert sample data if the destinations collection is empty
 if (db.destinations.countDocuments() === 0) {
     db.destinations.insertMany([
         {
@@ -98,7 +72,6 @@ if (db.destinations.countDocuments() === 0) {
         }
     ]);
 }
-
 
 print('Database initialized successfully!');
 

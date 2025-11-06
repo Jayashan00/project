@@ -139,8 +139,6 @@ const amenityIcons = {
   ),
 };
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
 const Planning = () => {
   const [location, setLocation] = useState("");
   const [hotels, setHotels] = useState([]);
@@ -229,59 +227,57 @@ const Planning = () => {
     setLoading(true);
 
     try {
-      const geoRes = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-          location
-        )}&key=${GOOGLE_MAPS_API_KEY}`
-      );
+      const geoRes = await fetch(`/api/geocode?location=${encodeURIComponent(location)}`);
+      if (!geoRes.ok) throw new Error("Geocoding failed");
+
       const geoData = await geoRes.json();
-
-      if (geoData.status === "OK" && geoData.results.length > 0) {
-        const { lat, lng } = geoData.results[0].geometry.location;
-        setCenter({ lat, lng });
-
-        const res = await fetch(
-          `http://localhost:5000/api/hotels?lat=${lat}&lon=${lng}&guests=${guests}&checkInDate=${formatDate(
-            checkInDate
-          )}&checkOutDate=${formatDate(checkOutDate)}`
-        );
-
-        if (!res.ok) throw new Error("Failed to fetch hotels");
-
-        const data = await res.json();
-
-        // Generate random prices for hotels
-        const hotelList =
-          data.result?.map((h, index) => {
-            // Generate random price between 5000 and 50000 LKR
-            const randomPrice = Math.floor(Math.random() * 45000) + 5000;
-
-            return {
-              id: Date.now() + index,
-              name: h.hotel_name || "Unnamed Hotel",
-              lat: h.latitude || center.lat + (Math.random() - 0.5) * 0.1,
-              lng: h.longitude || center.lng + (Math.random() - 0.5) * 0.1,
-              address: h.address_trans || "Address not available",
-              price: randomPrice,
-              image: stockImages[index % stockImages.length],
-              description: placeholderDescriptions[index % placeholderDescriptions.length],
-              rating: Math.floor(Math.random() * 2) + 4, // Random rating between 4-5
-              amenities: ["Free WiFi", "Swimming Pool", "Air Conditioning", "Restaurant", "Spa"],
-              checkInDate,
-              checkOutDate,
-              guests,
-              rooms,
-              quantity: 1,
-              roomType: ["Standard", "Deluxe", "Suite", "Family"][Math.floor(Math.random() * 4)]
-            };
-          }) || [];
-
-        setHotels(hotelList);
-        setShowPopup(true);
-      } else {
+      if (!geoData.lat || !geoData.lon) {
         setError("Location not found. Please try a different location.");
         setHotels([]);
+        setLoading(false);
+        return;
       }
+
+      setCenter({ lat: parseFloat(geoData.lat), lng: parseFloat(geoData.lon) });
+
+      const res = await fetch(
+        `http://localhost:5000/api/hotels?lat=${geoData.lat}&lon=${geoData.lon}&guests=${guests}&checkInDate=${formatDate(
+          checkInDate
+        )}&checkOutDate=${formatDate(checkOutDate)}`
+      );
+
+      if (!res.ok) throw new Error("Failed to fetch hotels");
+
+      const data = await res.json();
+
+      // Generate random prices for hotels
+      const hotelList =
+        data.result?.map((h, index) => {
+          // Generate random price between 5000 and 50000 LKR
+          const randomPrice = Math.floor(Math.random() * 45000) + 5000;
+
+          return {
+            id: Date.now() + index,
+            name: h.hotel_name || "Unnamed Hotel",
+            lat: h.latitude || center.lat + (Math.random() - 0.5) * 0.1,
+            lng: h.longitude || center.lng + (Math.random() - 0.5) * 0.1,
+            address: h.address_trans || "Address not available",
+            price: randomPrice,
+            image: stockImages[index % stockImages.length],
+            description: placeholderDescriptions[index % placeholderDescriptions.length],
+            rating: Math.floor(Math.random() * 2) + 4, // Random rating between 4-5
+            amenities: ["Free WiFi", "Swimming Pool", "Air Conditioning", "Restaurant", "Spa"],
+            checkInDate,
+            checkOutDate,
+            guests,
+            rooms,
+            quantity: 1,
+            roomType: ["Standard", "Deluxe", "Suite", "Family"][Math.floor(Math.random() * 4)]
+          };
+        }) || [];
+
+      setHotels(hotelList);
+      setShowPopup(true);
     } catch (err) {
       console.error(err);
       // Fallback to mock data if API fails
@@ -702,7 +698,7 @@ const Planning = () => {
                   {/* Map View */}
                   {activeView === "map" && (
                     <div className="w-full h-full relative">
-                      <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
+                      <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}>
                         <GoogleMap
                           mapContainerStyle={{ width: "100%", height: "100%" }}
                           center={center}
@@ -980,4 +976,3 @@ const Planning = () => {
 };
 
 export default Planning;
-

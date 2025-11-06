@@ -9,7 +9,7 @@ const ConnectionTest = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const response = await api.get('/api/health');
+        const response = await api.get('/health');
         setStatus(`Connected to backend! Server time: ${response.data.timestamp}`);
         setError(null);
       } catch (err) {

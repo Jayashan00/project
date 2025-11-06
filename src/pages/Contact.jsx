@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
     Mail, Phone, MapPin, Send, Clock, MessageSquare, Leaf,
     Mountain, Waves, Calendar, User, Users, Plane, Star,
-    Shield, Award, Heart
+    Shield, Award, Heart, DollarSign
 } from "lucide-react";
 import toast from 'react-hot-toast';
 import api from '../api/client';
@@ -80,7 +80,7 @@ const Contact = () => {
         }
         setIsLoading(true);
         try {
-            const response = await api.post('/api/contact', formData);
+            const response = await api.post('/contact', formData);
             setIsSubmitted(true);
             toast.success(response.data.message || 'Your message has been sent successfully!');
             setTimeout(() => {
@@ -214,45 +214,66 @@ const Contact = () => {
                                     <h2 className="text-2xl font-semibold mb-2 text-green-800">Customize Your Tour</h2>
                                     <p className="text-slate-600 mb-8">Tell us about your dream vacation.</p>
                                     <form onSubmit={handleSubmit} className="space-y-6">
-                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                           <div>
-                                               <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-2"><User size={16} className="inline mr-1" /> Your Name *</label>
-                                               <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Your full name" />
-                                           </div>
-                                           <div>
-                                               <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2"><Mail size={16} className="inline mr-1" /> Email Address *</label>
-                                               <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="your@email.com" />
-                                           </div>
-                                       </div>
-                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                          <div>
-                                             <label htmlFor="tourType" className="block text-sm font-medium text-slate-700 mb-2"><Mountain size={16} className="inline mr-1" /> Tour Type</label>
-                                             <select id="tourType" name="tourType" value={formData.tourType} onChange={handleChange} className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                                                 <option value="">Select tour type</option>
-                                                 <option value="cultural">Cultural & Heritage</option>
-                                                 <option value="wildlife">Wildlife Safari</option>
-                                                 <option value="beach">Beach Holiday</option>
-                                                 <option value="adventure">Adventure & Trekking</option>
-                                             </select>
-                                          </div>
-                                           <div>
-                                               <label htmlFor="travelers" className="block text-sm font-medium text-slate-700 mb-2"><Users size={16} className="inline mr-1" /> Number of Travelers</label>
-                                               <select id="travelers" name="travelers" value={formData.travelers} onChange={handleChange} className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                                                   <option value="">Select number</option>
-                                                   <option value="1">1 Person</option>
-                                                   <option value="2">2 People</option>
-                                                   <option value="3-4">3-4 People</option>
-                                                   <option value="5+">5+ People</option>
-                                               </select>
-                                           </div>
-                                       </div>
-                                       <div>
-                                           <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-2">Your Message *</label>
-                                           <textarea id="message" name="message" value={formData.message} onChange={handleChange} required rows={4} className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Tell us about your interests..."></textarea>
-                                       </div>
-                                       <motion.button whileHover={{ scale: 1.02, boxShadow: "0 5px 15px rgba(245, 158, 11, 0.3)" }} whileTap={{ scale: 0.98 }} type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white py-4 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
-                                           {isLoading ? (<><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Sending...</>) : (<><Send size={18} /> Plan My Adventure</>)}
-                                       </motion.button>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-2"><User size={16} className="inline mr-1" /> Your Name *</label>
+                                                <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Your full name" />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2"><Mail size={16} className="inline mr-1" /> Email Address *</label>
+                                                <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="your@email.com" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label htmlFor="tourType" className="block text-sm font-medium text-slate-700 mb-2"><Mountain size={16} className="inline mr-1" /> Tour Type</label>
+                                                <select id="tourType" name="tourType" value={formData.tourType} onChange={handleChange} className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                                    <option value="">Select tour type</option>
+                                                    <option value="cultural">Cultural & Heritage</option>
+                                                    <option value="wildlife">Wildlife Safari</option>
+                                                    <option value="beach">Beach Holiday</option>
+                                                    <option value="adventure">Adventure & Trekking</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label htmlFor="travelers" className="block text-sm font-medium text-slate-700 mb-2"><Users size={16} className="inline mr-1" /> Number of Travelers</label>
+                                                <select id="travelers" name="travelers" value={formData.travelers} onChange={handleChange} className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                                    <option value="">Select number</option>
+                                                    <option value="1">1 Person</option>
+                                                    <option value="2">2 People</option>
+                                                    <option value="3-4">3-4 People</option>
+                                                    <option value="5+">5+ People</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label htmlFor="duration" className="block text-sm font-medium text-slate-700 mb-2"><Clock size={16} className="inline mr-1" /> Duration</label>
+                                                <select id="duration" name="duration" value={formData.duration} onChange={handleChange} className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                                    <option value="">Select duration</option>
+                                                    <option value="1-3 Days">1-3 Days</option>
+                                                    <option value="4-7 Days">4-7 Days</option>
+                                                    <option value="8-14 Days">8-14 Days</option>
+                                                    <option value="15+ Days">15+ Days</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label htmlFor="budget" className="block text-sm font-medium text-slate-700 mb-2"><DollarSign size={16} className="inline mr-1" /> Budget</label>
+                                                <select id="budget" name="budget" value={formData.budget} onChange={handleChange} className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                                    <option value="">Select budget</option>
+                                                    <option value="Budget">Budget Friendly</option>
+                                                    <option value="Mid-range">Mid-range</option>
+                                                    <option value="Luxury">Luxury</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-2">Your Message *</label>
+                                            <textarea id="message" name="message" value={formData.message} onChange={handleChange} required rows={4} className="w-full p-4 rounded-xl bg-amber-50/50 border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Tell us about your interests..."></textarea>
+                                        </div>
+                                        <motion.button whileHover={{ scale: 1.02, boxShadow: "0 5px 15px rgba(245, 158, 11, 0.3)" }} whileTap={{ scale: 0.98 }} type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white py-4 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                                            {isLoading ? (<><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Sending...</>) : (<><Send size={18} /> Plan My Adventure</>)}
+                                        </motion.button>
                                     </form>
                                 </>
                             )}
@@ -265,3 +286,4 @@ const Contact = () => {
 };
 
 export default Contact;
+

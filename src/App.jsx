@@ -26,7 +26,7 @@ const Planning = lazy(() => import('./pages/Planning'));
 const SubscriptionPlans = lazy(() => import('./pages/SubscriptionPlans'));
 const Payment = lazy(() => import('./pages/Payment'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
-const Destinations = lazy(() => import('./pages/Destinations'));
+const NewDestinationsPage = lazy(() => import('./pages/NewDestinationsPage'));
 const DestinationDetail = lazy(() => import('./pages/DestinationDetail'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -52,7 +52,6 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
 };
 
 // --- Main App Component ---
-// NO LONGER CONTAINS A ROUTER. This is now just the layout.
 function App() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
@@ -65,7 +64,8 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/subscription" element={<SubscriptionPlans />} />
-                        <Route path="/destinations" element={<Destinations />} />
+                        {/* *** THE FIX IS HERE *** */}
+                        <Route path="/destinations" element={<NewDestinationsPage />} /> 
                         <Route path="/destinations/:id" element={<DestinationDetail />} />
                         <Route path="/gallery" element={<Gallery />} />
                         <Route path="/blog" element={<Blog />} />
@@ -93,4 +93,3 @@ function App() {
 }
 
 export default App;
-

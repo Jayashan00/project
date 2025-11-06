@@ -1,11 +1,17 @@
 version: '3.8'
 
 services:
-  # MongoDB Database
+  # MongoDB Database with a Health Check
   mongo:
     image: mongo:7.0
     container_name: srilanka-mongo
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password123
@@ -18,39 +24,45 @@ services:
     networks:
       - srilanka-network
 
-  # Backend API
+  # Backend API that waits for the database and uses API keys
   backend:
     build:
       context: ./server
       dockerfile: Dockerfile
     container_name: srilanka-backend
     restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 5000
       MONGODB_URI: mongodb://admin:password123@mongo:27017/srilankatravel?authSource=admin
       JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
-      # This allows the backend to accept requests from the frontend running on port 3001
       FRONTEND_URL: http://localhost:3001
       BASE_URL: http://localhost:5000
+      # --- API KEYS ARE PASSED FROM .env FILE ---
+      GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
+      RAPIDAPI_KEY: ${RAPIDAPI_KEY}
     ports:
       - "5000:5000"
-    depends_on:
-      - mongo
     volumes:
-      - ./server/uploads:/app/uploads
+      - ./server:/app
+      - /app/node_modules
     networks:
       - srilanka-network
 
-  # Nginx service to build and serve the frontend
+  # Nginx service that gets the API key during build
   nginx:
     build:
-      context: . # Build from the root directory
-      dockerfile: Dockerfile # Use the multi-stage Dockerfile
+      context: . 
+      dockerfile: Dockerfile
+      # --- PASSES API KEY TO FRONTEND BUILD ---
+      args:
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
     container_name: srilanka-nginx
     restart: unless-stopped
     ports:
-      # Expose the frontend on port 3001 on your machine
       - "3001:80"
     depends_on:
       - backend
