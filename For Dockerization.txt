@@ -1,0 +1,10 @@
+For Dockerization
+cd "/mnt/d/New folder (7)/project"
+docker-compose up --build -d
+
+See the database
+docker exec -it srilanka-mongo mongosh -u admin -p password123
+show dbs
+use srilankatravel
+show collections
+db.users.find().pretty()

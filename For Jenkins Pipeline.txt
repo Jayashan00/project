@@ -1,0 +1,98 @@
+For Jenkins Pipeline
+
+cd "/mnt/d/New folder (7)/project"
+sudo usermod -aG docker Jenkins
+sudo systemctl restart Jenkins
+
+📁 Step 3: Create a Jenkins Pipeline Job
+
+On Jenkins home page → Click “New Item”
+
+Enter a name like srilanka-docker-pipeline
+
+Select Pipeline
+
+Click OK
+
+⚙️ Step 4: Add Pipeline Script
+
+pipeline {
+    agent any
+
+    environment {
+        COMPOSE_FILE = 'docker-compose.yml'
+        PROJECT_DIR = '/mnt/d/New folder (7)/project'
+    }
+
+    stages {
+        stage('Checkout Source') {
+            steps {
+                echo 'Using local files...'
+                dir("${PROJECT_DIR}") {
+                    sh 'ls -la'
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    sh 'docker compose build'
+                }
+            }
+        }
+
+        stage('Run Containers') {
+            steps {
+                dir("${PROJECT_DIR}") {
+                    sh 'docker compose up -d'
+                }
+            }
+        }
+
+        stage('Check Running Services') {
+            steps {
+                sh 'docker ps'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Build and deployment successful!'
+        }
+        failure {
+            echo '❌ Build failed!'
+        }
+    }
+}
+
+Then click Save.
+
+▶️ Step 5: Run the Pipeline
+
+Click “Build Now”
+
+Watch the Console Output
+→ Jenkins will:
+
+Build your backend, frontend, and nginx Docker images
+
+Start Mongo, Backend, and Frontend containers
+
+Confirm they’re running
+
+🧠 Step 6: Verify the Running Project
+
+After build completes:
+
+Backend → http://localhost:5000
+
+Frontend (Nginx) → http://localhost:3001
+
+Mongo → localhost:27017 (optional for inspection)
+
+Step 07:
+In WSL command line
+docker ps
+

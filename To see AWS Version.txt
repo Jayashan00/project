@@ -1,0 +1,5 @@
+To see AWS Version
+
+ cd "/mnt/d/New folder (7)/project"
+cd ~
+aws --version

@@ -1,0 +1,11 @@
+For terraform
+
+cd "/mnt/d/New folder (7)/project"
+
+cd terraform
+
+terraform init
+
+terraform apply
+
+terraform destroy
