@@ -9,19 +9,20 @@ pipeline {
         IMAGE_TAG = "${env.BUILD_NUMBER}"  // automatically versioned
     }
 
-    stages {
-        stage('Checkout from GitHub') {
-            steps {
-                echo '📦 Cloning repository from GitHub...'
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/jayashan00/srilanka-project.git',
-                        credentialsId: 'github-creds'
-                    ]]
-                ])
-            }
+    stage('Checkout from GitHub') {
+        steps {
+            echo '📦 Cloning repository from GitHub...'
+            checkout([
+                $class: 'GitSCM',
+                branches: [[name: '*/master']],
+                userRemoteConfigs: [[
+                    url: 'https://github.com/Jayashan00/project.git',  // ✅ exact repo name
+                    credentialsId: 'github-creds'
+                ]]
+            ])
         }
+    }
+
 
         stage('Build Docker Images') {
             steps {
