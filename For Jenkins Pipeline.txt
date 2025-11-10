@@ -1,6 +1,9 @@
 For Jenkins Pipeline
 
 cd "/mnt/d/New folder (7)/project"
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl status jenkins
 sudo usermod -aG docker Jenkins
 sudo systemctl restart Jenkins
 
