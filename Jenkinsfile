@@ -34,11 +34,11 @@ pipeline {
             steps {
                 echo '🌐 Building Frontend Docker Image...'
                 sh '''
-                    cd src
                     docker build -t ${FRONTEND_IMAGE}:latest .
                 '''
             }
         }
+
 
         stage('Login to DockerHub') {
             steps {
