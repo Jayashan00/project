@@ -1,67 +1,83 @@
-# This new block tells Terraform to use the 'kreuzwerker/docker' provider
-# when it sees the "docker" provider name, and locks it to version 3.0.2.
 terraform {
   required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0.2"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
     }
   }
 }
 
-provider "docker" {
-  host = "unix:///var/run/docker.sock"
+provider "aws" {
+  region = "ap-south-1"   # Mumbai (closest to Sri Lanka)
 }
 
-# MongoDB container
-resource "docker_container" "mongo" {
-  name  = "srilanka-mongo"
-  image = "mongo:7.0"
-  ports {
-    internal = 27017
-    external = 27017
+# ----------------------------
+# 1. Create Security Group
+# ----------------------------
+resource "aws_security_group" "app_sg" {
+  name        = "srilanka_project_sg"
+  description = "Allow backend and frontend ports"
+
+  ingress {
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-  env = [
-    "MONGO_INITDB_ROOT_USERNAME=admin",
-    "MONGO_INITDB_ROOT_PASSWORD=password123",
-    "MONGO_INITDB_DATABASE=srilankatravel"
-  ]
-}
 
-# Backend
-resource "docker_image" "backend" {
-  name = "project_backend"
-  build {
-    context    = "../server"
-    dockerfile = "Dockerfile"
+  ingress {
+    from_port   = 3001
+    to_port     = 3001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-}
 
-resource "docker_container" "backend" {
-  name  = "srilanka-backend"
-  image = docker_image.backend.image_id
-  ports {
-    internal = 5000
-    external = 5000
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-  depends_on = [docker_container.mongo]
-}
 
-# Frontend
-resource "docker_image" "frontend" {
-  name = "project_nginx"
-  build {
-    context    = ".."
-    dockerfile = "Dockerfile"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-resource "docker_container" "frontend" {
-  name  = "srilanka-nginx"
-  image = docker_image.frontend.image_id
-  ports {
-    internal = 80
-    external = 3001
+# ----------------------------
+# 2. Create EC2 Instance
+# ----------------------------
+resource "aws_instance" "srilanka_server" {
+  ami           = "ami-0a0f1259dd1c90938"   # Ubuntu 22.04
+  instance_type = "t2.micro"
+
+  key_name = "mykeypair"  # your AWS key pair
+
+  vpc_security_group_ids = [aws_security_group.app_sg.id]
+
+  # Install Docker + run your containers
+  user_data = <<-EOF
+    #!/bin/bash
+    apt update -y
+    apt install docker.io -y
+    systemctl start docker
+    systemctl enable docker
+
+    docker pull jayashan00/srilanka-backend:latest
+    docker pull jayashan00/srilanka-frontend:latest
+
+    docker run -d -p 5000:5000 --name backend jayashan00/srilanka-backend:latest
+    docker run -d -p 3001:80 --name frontend jayashan00/srilanka-frontend:latest
+  EOF
+
+  tags = {
+    Name = "SriLankaTravelProject"
   }
-  depends_on = [docker_container.backend]
+}
+
+output "public_ip" {
+  value = aws_instance.srilanka_server.public_ip
 }

@@ -3,70 +3,74 @@ pipeline {
 
     environment {
         GITHUB_REPO = 'https://github.com/Jayashan00/project.git'
-        DOCKER_IMAGE = 'jayashan00/srilanka-project'
+        DOCKERHUB_USER = 'jayashan00'
+
+        FRONTEND_IMAGE = "${DOCKERHUB_USER}/srilanka-frontend"
+        BACKEND_IMAGE = "${DOCKERHUB_USER}/srilanka-backend"
+
         DOCKER_CREDENTIALS = 'dockerhub-creds'
         GITHUB_CREDENTIALS = 'github-creds'
-        PROJECT_DIR = 'project'
+        AWS_CREDENTIALS    = 'aws-creds'
     }
 
     stages {
-        stage('Checkout from GitHub') {
+
+        stage('Checkout') {
             steps {
-                echo '📦 Cloning repository from GitHub...'
                 git branch: 'master',
                     credentialsId: "${GITHUB_CREDENTIALS}",
                     url: "${GITHUB_REPO}"
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Backend Image') {
             steps {
-                echo '🐳 Building Docker image...'
-                sh "docker build -t ${DOCKER_IMAGE}:latest ."
+                sh """
+                    cd backend
+                    docker build -t ${BACKEND_IMAGE}:latest .
+                """
+            }
+        }
+
+        stage('Build Frontend Image') {
+            steps {
+                sh """
+                    cd frontend
+                    docker build -t ${FRONTEND_IMAGE}:latest .
+                """
             }
         }
 
         stage('Login to Docker Hub') {
             steps {
-                echo '🔐 Logging into Docker Hub...'
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-                    sh 'echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin'
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh 'echo "$PASS" | docker login -u "$USER" --password-stdin'
                 }
             }
         }
 
-        stage('Tag & Push Images to Docker Hub') {
+        stage('Push Images') {
             steps {
-                echo '🚀 Tagging and pushing Docker image...'
-                sh """
-                    docker tag ${DOCKER_IMAGE}:latest ${DOCKER_IMAGE}:latest
-                    docker push ${DOCKER_IMAGE}:latest
-                """
+                sh "docker push ${BACKEND_IMAGE}:latest"
+                sh "docker push ${FRONTEND_IMAGE}:latest"
             }
         }
 
-        stage('Run Containers') {
+        stage('Terraform Init') {
             steps {
-                echo '🧱 Running Docker containers...'
-                sh 'docker compose down || true'
-                sh 'docker compose up -d'
+                sh "cd terraform && terraform init"
             }
         }
 
-        stage('Check Running Services') {
+        stage('Terraform Apply') {
             steps {
-                echo '🔍 Checking running containers...'
-                sh 'docker ps'
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS}"]]) {
+                    sh """
+                        cd terraform
+                        terraform apply -auto-approve
+                    """
+                }
             }
-        }
-    }
-
-    post {
-        success {
-            echo '✅ Build and deployment successful!'
-        }
-        failure {
-            echo '❌ Pipeline failed! Check Jenkins logs.'
         }
     }
 }
