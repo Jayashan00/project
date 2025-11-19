@@ -60,25 +60,34 @@ pipeline {
         }
 
         stage('Terraform Init') {
-            steps {
-                echo '📦 Running Terraform Init...'
-                sh '''
-                    cd terraform
-                    terraform init
-                '''
-            }
-        }
+                    steps {
+                        echo '📦 Running Terraform Init...'
+                        // Init usually doesn't need creds unless using S3 backend,
+                        // but good practice to keep env consistent.
+                        sh '''
+                            cd terraform
+                            terraform init
+                        '''
+                    }
+                }
 
-        stage('Terraform Apply') {
-            steps {
-                echo '🚀 Applying Terraform...'
-                sh '''
-                    cd terraform
-                    terraform apply -auto-approve
-                '''
-            }
-        }
-    }
+                stage('Terraform Apply') {
+                    steps {
+                        echo '🚀 Applying Terraform...'
+                        // LOGIC ADDED HERE: Injecting the 'aws-creds' from your screenshot
+                        withCredentials([[
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            credentialsId: 'aws-creds',
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]]) {
+                            sh '''
+                                cd terraform
+                                terraform apply -auto-approve
+                            '''
+                        }
+                    }
+                }
 
     post {
         success {
