@@ -3,14 +3,11 @@ pipeline {
 
     environment {
         GITHUB_REPO = 'https://github.com/Jayashan00/project.git'
-        DOCKERHUB_USER = 'jayashan00'
-
-        FRONTEND_IMAGE = "${DOCKERHUB_USER}/srilanka-frontend"
-        BACKEND_IMAGE = "${DOCKERHUB_USER}/srilanka-backend"
-
-        DOCKER_CREDENTIALS = 'dockerhub-creds'
+        DOCKERHUB_CREDENTIALS = 'dockerhub-creds'
         GITHUB_CREDENTIALS = 'github-creds'
-        AWS_CREDENTIALS    = 'aws-creds'
+
+        BACKEND_IMAGE = 'jayashan00/srilanka-backend'
+        FRONTEND_IMAGE = 'jayashan00/srilanka-frontend'
     }
 
     stages {
@@ -25,25 +22,28 @@ pipeline {
 
         stage('Build Backend Image') {
             steps {
-                sh """
-                    cd backend
+                echo '🐳 Building Backend Docker Image...'
+                sh '''
+                    cd server
                     docker build -t ${BACKEND_IMAGE}:latest .
-                """
+                '''
             }
         }
 
         stage('Build Frontend Image') {
             steps {
-                sh """
-                    cd frontend
+                echo '🌐 Building Frontend Docker Image...'
+                sh '''
+                    cd src
                     docker build -t ${FRONTEND_IMAGE}:latest .
-                """
+                '''
             }
         }
 
-        stage('Login to Docker Hub') {
+        stage('Login to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                echo '🔐 Logging into DockerHub...'
+                withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh 'echo "$PASS" | docker login -u "$USER" --password-stdin'
                 }
             }
@@ -51,26 +51,41 @@ pipeline {
 
         stage('Push Images') {
             steps {
-                sh "docker push ${BACKEND_IMAGE}:latest"
-                sh "docker push ${FRONTEND_IMAGE}:latest"
+                echo '🚀 Pushing Backend & Frontend Images to DockerHub...'
+                sh '''
+                    docker push ${BACKEND_IMAGE}:latest
+                    docker push ${FRONTEND_IMAGE}:latest
+                '''
             }
         }
 
         stage('Terraform Init') {
             steps {
-                sh "cd terraform && terraform init"
+                echo '📦 Running Terraform Init...'
+                sh '''
+                    cd terraform
+                    terraform init
+                '''
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS}"]]) {
-                    sh """
-                        cd terraform
-                        terraform apply -auto-approve
-                    """
-                }
+                echo '🚀 Applying Terraform...'
+                sh '''
+                    cd terraform
+                    terraform apply -auto-approve
+                '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline Completed Successfully!'
+        }
+        failure {
+            echo '❌ Pipeline Failed — Check Logs.'
         }
     }
 }
