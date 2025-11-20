@@ -28,11 +28,14 @@ data "aws_ami" "ubuntu" {
 }
 
 
-resource "aws_security_group" "app_sg" {
+# ... (provider block remains the same) ...
 
-  name        = "srilanka_project_sg"
+# 1. RENAME THE SECURITY GROUP
+resource "aws_security_group" "app_sg" {
+  name        = "srilanka_project_sg_v3"  # <--- Update this to v3
   description = "Allow backend and frontend ports"
 
+  # ... (Keep your ingress/egress rules exactly the same) ...
   ingress {
     from_port   = 5000
     to_port     = 5000
@@ -59,17 +62,16 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
+# 2. UPDATE THE INSTANCE TYPE
 resource "aws_instance" "srilanka_server" {
-
   ami           = data.aws_ami.ubuntu.id
-
-
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"              # <--- Change t2.micro to t3.micro
 
   key_name = "mykeypair"
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
+  # ... (Keep your user_data and tags exactly the same) ...
   user_data = <<-EOF
     #!/bin/bash
     apt update -y
