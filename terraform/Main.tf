@@ -35,7 +35,7 @@ resource "aws_security_group" "app_sg" {
   name        = "srilanka_project_sg_v3"  # <--- Update this to v3
   description = "Allow backend and frontend ports"
 
-  # ... (Keep your ingress/egress rules exactly the same) ...
+
   ingress {
     from_port   = 5000
     to_port     = 5000
