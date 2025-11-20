@@ -63,7 +63,7 @@ resource "aws_instance" "srilanka_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"           # Updated from t2 to t3 for Mumbai compatibility
 
-  key_name = "mykeypair"               # Ensure this key exists in AWS Console -> EC2 -> Key Pairs
+  key_name = "mykeypair"
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
