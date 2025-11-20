@@ -8,13 +8,29 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-south-1"   # Mumbai (closest to Sri Lanka)
+  region = "ap-south-1"
 }
 
-# ----------------------------
-# 1. Create Security Group
-# ----------------------------
+# --- NEW: Automatically find the latest Ubuntu 22.04 AMI for this region ---
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical (Official Ubuntu Owner ID)
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+# -------------------------------------------------------------------------
+
 resource "aws_security_group" "app_sg" {
+  # ... (keep your existing Security Group code exactly as it is) ...
+  # Make sure the name is "srilanka_project_sg" or whatever you renamed it to
   name        = "srilanka_project_sg"
   description = "Allow backend and frontend ports"
 
@@ -24,21 +40,18 @@ resource "aws_security_group" "app_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
     from_port   = 3001
     to_port     = 3001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -47,18 +60,18 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-# ----------------------------
-# 2. Create EC2 Instance
-# ----------------------------
 resource "aws_instance" "srilanka_server" {
-  ami           = "ami-0a0f1259dd1c90938"   # Ubuntu 22.04
+  # --- UPDATED: Use the dynamic ID we found above ---
+  ami           = data.aws_ami.ubuntu.id
+
+  # Note: In Mumbai, sometimes t2.micro is unavailable in specific zones.
+  # If this fails again, change this to "t3.micro"
   instance_type = "t2.micro"
 
-  key_name = "mykeypair"  # your AWS key pair
+  key_name = "mykeypair"
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
-  # Install Docker + run your containers
   user_data = <<-EOF
     #!/bin/bash
     apt update -y
