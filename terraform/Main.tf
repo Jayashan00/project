@@ -8,13 +8,13 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-south-1"
+  region = "ap-south-1"   # Mumbai
 }
 
-
+# 1. DYNAMIC AMI LOOKUP (Finds the correct Ubuntu image for Mumbai)
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"]
+  owners      = ["099720109477"] # Canonical
 
   filter {
     name   = "name"
@@ -27,14 +27,10 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-
-# ... (provider block remains the same) ...
-
-# 1. RENAME THE SECURITY GROUP
+# 2. SECURITY GROUP (Renamed to v3 to avoid "Duplicate" error)
 resource "aws_security_group" "app_sg" {
-  name        = "srilanka_project_sg_v3"  # <--- Update this to v3
+  name        = "srilanka_project_sg_v3"
   description = "Allow backend and frontend ports"
-
 
   ingress {
     from_port   = 5000
@@ -62,16 +58,15 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-# 2. UPDATE THE INSTANCE TYPE
+# 3. EC2 INSTANCE (Using t3.micro for compatibility)
 resource "aws_instance" "srilanka_server" {
   ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.micro"              # <--- Change t2.micro to t3.micro
+  instance_type = "t3.micro"           # Updated from t2 to t3 for Mumbai compatibility
 
-  key_name = "mykeypair"
+  key_name = "mykeypair"               # Ensure this key exists in AWS Console -> EC2 -> Key Pairs
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
-  # ... (Keep your user_data and tags exactly the same) ...
   user_data = <<-EOF
     #!/bin/bash
     apt update -y
