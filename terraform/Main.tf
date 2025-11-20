@@ -61,7 +61,7 @@ resource "aws_security_group" "app_sg" {
 # 3. EC2 INSTANCE (Using t3.micro for compatibility)
 resource "aws_instance" "srilanka_server" {
   ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.micro"           # Updated from t2 to t3 for Mumbai compatibility
+  instance_type = "t3.micro"
 
   key_name = "mykeypair"
 
