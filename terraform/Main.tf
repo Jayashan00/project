@@ -11,10 +11,10 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# --- NEW: Automatically find the latest Ubuntu 22.04 AMI for this region ---
+
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"] # Canonical (Official Ubuntu Owner ID)
+  owners      = ["099720109477"]
 
   filter {
     name   = "name"
@@ -26,11 +26,10 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 }
-# -------------------------------------------------------------------------
+
 
 resource "aws_security_group" "app_sg" {
-  # ... (keep your existing Security Group code exactly as it is) ...
-  # Make sure the name is "srilanka_project_sg" or whatever you renamed it to
+
   name        = "srilanka_project_sg"
   description = "Allow backend and frontend ports"
 
@@ -61,11 +60,10 @@ resource "aws_security_group" "app_sg" {
 }
 
 resource "aws_instance" "srilanka_server" {
-  # --- UPDATED: Use the dynamic ID we found above ---
+
   ami           = data.aws_ami.ubuntu.id
 
-  # Note: In Mumbai, sometimes t2.micro is unavailable in specific zones.
-  # If this fails again, change this to "t3.micro"
+
   instance_type = "t2.micro"
 
   key_name = "mykeypair"
