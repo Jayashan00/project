@@ -29,7 +29,7 @@ data "aws_ami" "ubuntu" {
 
 # 2. SECURITY GROUP (Renamed to v3 to avoid "Duplicate" error)
 resource "aws_security_group" "app_sg" {
-  name        = "srilanka_project_sg_v5"
+  name        = "srilanka_project_sg_v6"
   description = "Allow backend and frontend ports"
 
   ingress {
@@ -63,7 +63,7 @@ resource "aws_instance" "srilanka_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
 
-  key_name = "mykeypair"
+  key_name = "srilanka-key"
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
