@@ -67,7 +67,7 @@ key_name = "project-key-2025"  # <--- Use the new key name here
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
-  # UPDATE THIS SCRIPT
+
   user_data = <<-EOF
     #!/bin/bash
     apt update -y
