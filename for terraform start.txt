@@ -1,0 +1,4 @@
+for terraform start 
+cd "/mnt/d/New folder (7)/project"
+ssh -i ~/.ssh/project-key-2025.pem ubuntu@13.201.21.203
+sudo docker ps

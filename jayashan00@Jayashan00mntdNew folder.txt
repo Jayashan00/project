@@ -1,0 +1,6 @@
+jayashan00@Jayashan00:/mnt/d/New folder (7)/project$ cp /mnt/c/Users/USER/Downloads/project-key-2025.pem ~/.ssh/
+cp: cannot stat '/mnt/c/Users/USER/Downloads/project-key-2025.pem': No such file or directory
+jayashan00@Jayashan00:/mnt/d/New folder (7)/project$ mkdir -p ~/.ssh
+jayashan00@Jayashan00:/mnt/d/New folder (7)/project$ cp "project-key-2025.pem" ~/.ssh/
+jayashan00@Jayashan00:/mnt/d/New folder (7)/project$ chmod 400 ~/.ssh/project-key-2025.pem
+jayashan00@Jayashan00:/mnt/d/New folder (7)/project$ ssh -i ~/.ssh/project-key-2025.pem ubuntu@13.201.21.203
