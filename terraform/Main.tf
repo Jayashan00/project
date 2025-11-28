@@ -63,10 +63,11 @@ resource "aws_instance" "srilanka_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
 
-  key_name = "mykeypair"
+key_name = "project-key-2025"  # <--- Use the new key name here
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
+  # UPDATE THIS SCRIPT
   user_data = <<-EOF
     #!/bin/bash
     apt update -y
@@ -74,10 +75,18 @@ resource "aws_instance" "srilanka_server" {
     systemctl start docker
     systemctl enable docker
 
-    docker pull jayashan00/srilanka-backend:latest
-    docker pull jayashan00/srilanka-frontend:latest
+    # 1. Create a network so containers can talk to each other
+    docker network create app-network
 
-    docker run -d -p 5000:5000 --name backend jayashan00/srilanka-backend:latest
+    # 2. Start MongoDB
+    docker run -d --name mongo_db --network app-network mongo:latest
+
+    # 3. Start Backend (connected to network)
+    docker pull jayashan00/srilanka-backend:latest
+    docker run -d -p 5000:5000 --name backend --network app-network jayashan00/srilanka-backend:latest
+
+    # 4. Start Frontend
+    docker pull jayashan00/srilanka-frontend:latest
     docker run -d -p 3001:80 --name frontend jayashan00/srilanka-frontend:latest
   EOF
 
