@@ -63,7 +63,7 @@ resource "aws_instance" "srilanka_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
 
-  key_name = "srilanka-key"
+  key_name = "mykeypair"
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
