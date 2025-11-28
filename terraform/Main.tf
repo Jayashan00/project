@@ -69,26 +69,31 @@ key_name = "project-key-2025"  # <--- Use the new key name here
 
 
   user_data = <<-EOF
-    #!/bin/bash
-    apt update -y
-    apt install docker.io -y
-    systemctl start docker
-    systemctl enable docker
+      #!/bin/bash
+      apt update -y
+      apt install docker.io -y
+      systemctl start docker
+      systemctl enable docker
 
-    # 1. Create a network so containers can talk to each other
-    docker network create app-network
+      # 1. Create a network so containers can talk to each other
+      docker network create app-network
 
-    # 2. Start MongoDB
-    docker run -d --name mongo_db --network app-network mongo:latest
+      # 2. Start MongoDB
+      docker run -d --name mongo_db --network app-network mongo:latest
 
-    # 3. Start Backend (connected to network)
-    docker pull jayashan00/srilanka-backend:latest
-    docker run -d -p 5000:5000 --name backend --network app-network jayashan00/srilanka-backend:latest
+      # 3. Start Backend (connected to network)
+      # WE ADDED THE MISSING ENV VARIABLE HERE:
+      docker pull jayashan00/srilanka-backend:latest
+      docker run -d -p 5000:5000 \
+        --name backend \
+        --network app-network \
+        -e MONGODB_URI='mongodb://mongo_db:27017/travel' \
+        jayashan00/srilanka-backend:latest
 
-    # 4. Start Frontend
-    docker pull jayashan00/srilanka-frontend:latest
-    docker run -d -p 3001:80 --name frontend jayashan00/srilanka-frontend:latest
-  EOF
+      # 4. Start Frontend
+      docker pull jayashan00/srilanka-frontend:latest
+      docker run -d -p 3001:80 --name frontend jayashan00/srilanka-frontend:latest
+    EOF
 
   tags = {
     Name = "SriLankaTravelProject"
