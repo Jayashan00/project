@@ -1,0 +1,63 @@
+To "down" (stop and delete) your containers and restart them fresh, you need to be inside your AWS server.
+
+Here is the exact sequence of commands.
+
+Step 1: Log in to AWS
+(If you are not already logged in)
+
+Bash
+
+ssh -i ~/.ssh/project-key-2025.pem ubuntu@13.201.21.203
+Step 2: "Down" the Containers (Stop & Delete)
+Run this command to force-stop and remove the Backend, Frontend, and Database containers.
+
+Bash
+
+sudo docker rm -f backend frontend mongo_db
+Note: This deletes the running "machines" but does not delete the Docker images you downloaded.
+
+Step 3: Re-Run Everything (The Correct Way)
+Copy and paste these commands one by one to start them up with the correct settings (including the fix we found for the database URL).
+
+1. Create Network (Ignore error if it already exists)
+
+Bash
+
+sudo docker network create app-network
+2. Start MongoDB
+
+Bash
+
+sudo docker run -d --name mongo_db --network app-network mongo:latest
+3. Start Backend (With the FIX)
+
+Bash
+
+# Pull latest code just in case
+sudo docker pull jayashan00/srilanka-backend:latest
+
+# Run with the CORRECT variable name (MONGODB_URI)
+sudo docker run -d -p 5000:5000 \
+  --name backend \
+  --network app-network \
+  -e MONGODB_URI='mongodb://mongo_db:27017/travel' \
+  jayashan00/srilanka-backend:latest
+4. Start Frontend
+
+Bash
+
+# Pull latest code
+sudo docker pull jayashan00/srilanka-frontend:latest
+
+# Run
+sudo docker run -d -p 3001:80 \
+  --name frontend \
+  --network app-network \
+  jayashan00/srilanka-frontend:latest
+Step 4: Verify
+Run this command:
+
+Bash
+
+sudo docker ps
+You should see 3 lines (frontend, backend, mongo_db). If they are all there, your site is back online!
