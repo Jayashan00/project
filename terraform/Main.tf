@@ -11,7 +11,7 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# ------------------ AMI ------------------
+# ------------------ AMI -----------------
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"]
