@@ -7,21 +7,18 @@ RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     gnupg \
-    software-properties-common \
-    awscli \
-    docker.io \
+    lsb-release \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Terraform
-RUN curl -fsSL https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip -o terraform.zip \
-    && unzip terraform.zip \
-    && mv terraform /usr/local/bin/terraform \
-    && rm terraform.zip
+RUN curl -fsSL https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip \
+    -o terraform.zip && \
+    unzip terraform.zip && \
+    mv terraform /usr/local/bin/terraform && \
+    rm terraform.zip
 
-# Allow Jenkins to use Docker
-RUN usermod -aG docker jenkins
-
-# Verify
-RUN terraform -version && docker --version
+# Verify installation
+RUN terraform version
 
 USER jenkins
