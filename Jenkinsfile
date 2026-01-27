@@ -10,11 +10,10 @@ pipeline {
         FRONTEND_IMAGE = 'jayashan00/srilanka-frontend'
     }
 
-
-
+    stages { // <--- This was missing
         stage('Build Backend Image') {
             steps {
-                echo '🐳 Building Backend Docker Image...'
+                echo 'Building Backend Docker Image...'
                 sh '''
                     cd server
                     docker build -t ${BACKEND_IMAGE}:latest .
@@ -24,16 +23,14 @@ pipeline {
 
         stage('Build Frontend Image') {
             steps {
-                echo '🌐 Building Frontend Docker Image...'
-                sh '''
-                    docker build -t ${FRONTEND_IMAGE}:latest .
-                '''
+                echo 'Building Frontend Docker Image...'
+                sh 'docker build -t ${FRONTEND_IMAGE}:latest .'
             }
         }
 
         stage('Login to DockerHub') {
             steps {
-                echo '🔐 Logging into DockerHub...'
+                echo 'Logging into DockerHub...'
                 withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh 'echo "$PASS" | docker login -u "$USER" --password-stdin'
                 }
@@ -42,7 +39,7 @@ pipeline {
 
         stage('Push Images') {
             steps {
-                echo '🚀 Pushing Backend & Frontend Images to DockerHub...'
+                echo 'Pushing Backend & Frontend Images to DockerHub...'
                 sh '''
                     docker push ${BACKEND_IMAGE}:latest
                     docker push ${FRONTEND_IMAGE}:latest
@@ -52,7 +49,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                echo '📦 Running Terraform Init...'
+                echo 'Running Terraform Init...'
                 sh '''
                     cd terraform
                     terraform init
@@ -62,8 +59,7 @@ pipeline {
 
         stage('Terraform Apply') {
             steps {
-                echo '🚀 Applying Terraform with AWS Credentials...'
-                // This block injects the credentials named 'aws-creds' into environment variables
+                echo 'Applying Terraform...'
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: 'aws-creds',
@@ -77,49 +73,42 @@ pipeline {
                 }
             }
         }
+
         stage('Deploy to Server') {
-                    steps {
-                        echo '🚀 Deploying to EC2 Instance...'
-                        script {
-                            // 1. Get the Public IP from Terraform Output
-                            def server_ip = sh(script: "cd terraform && terraform output -raw public_ip", returnStdout: true).trim()
+            steps {
+                echo 'Deploying to EC2 Instance...'
+                script {
+                    def server_ip = sh(script: "cd terraform && terraform output -raw public_ip", returnStdout: true).trim()
 
-                            echo "Connecting to ${server_ip}..."
+                    sshagent(['ec2-ssh-key']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ubuntu@${server_ip} '
+                                docker stop backend frontend || true
+                                docker rm backend frontend || true
+                                docker system prune -af
+                                docker pull ${BACKEND_IMAGE}:latest
+                                docker pull ${FRONTEND_IMAGE}:latest
 
-                            // 2. SSH into the server and update containers
-                            // We use StrictHostKeyChecking=no to avoid yes/no prompts
-                            sshagent(['ec2-ssh-key']) { // Replace with your Jenkins Credential ID for the PEM key
-                                sh """
-                                    ssh -o StrictHostKeyChecking=no ubuntu@${server_ip} '
-                                        # Stop and remove old containers
-                                        docker stop backend frontend || true
-                                        docker rm backend frontend || true
+                                # Ensure network exists
+                                docker network create app-network || true
 
-                                        # Remove old images to save space
-                                        docker system prune -af
+                                docker run -d -p 5000:5000 \
+                                    --name backend \
+                                    --network app-network \
+                                    -e MONGODB_URI="mongodb://mongo_db:27017/travel" \
+                                    ${BACKEND_IMAGE}:latest
 
-                                        # Pull new images
-                                        docker pull jayashan00/srilanka-backend:latest
-                                        docker pull jayashan00/srilanka-frontend:latest
-
-                                        # Start Backend
-                                        docker run -d -p 5000:5000 \
-                                            --name backend \
-                                            --network app-network \
-                                            -e MONGODB_URI="mongodb://mongo_db:27017/travel" \
-                                            jayashan00/srilanka-backend:latest
-
-                                        # Start Frontend
-                                        docker run -d -p 3001:80 \
-                                            --name frontend \
-                                            jayashan00/srilanka-frontend:latest
-                                    '
-                                """
-                            }
-                        }
+                                docker run -d -p 3001:80 \
+                                    --name frontend \
+                                    --network app-network \
+                                    ${FRONTEND_IMAGE}:latest
+                            '
+                        """
                     }
                 }
-    } // <--- This closing brace was likely missing for 'stages'
+            }
+        }
+    } // <--- Closing stages
 
     post {
         success {
@@ -129,4 +118,4 @@ pipeline {
             echo '❌ Pipeline Failed — Check Logs.'
         }
     }
-} // <--- This closing brace is for 'pipeline'
+}
