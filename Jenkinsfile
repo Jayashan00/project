@@ -75,25 +75,33 @@ pipeline {
                     sshagent(['ec2-ssh-key']) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ubuntu@${ip} '
-                            docker network create app-network || true
+                            echo "⏳ Waiting for Docker to be ready..."
+                            until command -v docker >/dev/null 2>&1; do
+                                sleep 5
+                            done
 
-                            docker rm -f backend frontend mongo || true
+                            sudo docker network create app-network || true
 
-                            docker run -d --name mongo \
+                            sudo docker rm -f backend frontend mongo || true
+
+                            sudo docker run -d \
+                              --name mongo \
                               --network app-network \
                               -p 27017:27017 \
                               mongo:7.0
 
-                            docker pull ${BACKEND_IMAGE}:latest
-                            docker pull ${FRONTEND_IMAGE}:latest
+                            sudo docker pull ${BACKEND_IMAGE}:latest
+                            sudo docker pull ${FRONTEND_IMAGE}:latest
 
-                            docker run -d --name backend \
+                            sudo docker run -d \
+                              --name backend \
                               --network app-network \
                               -p 5000:5000 \
                               -e MONGODB_URI="mongodb://mongo:27017/travel" \
                               ${BACKEND_IMAGE}:latest
 
-                            docker run -d --name frontend \
+                            sudo docker run -d \
+                              --name frontend \
                               --network app-network \
                               -p 3001:80 \
                               ${FRONTEND_IMAGE}:latest
@@ -103,6 +111,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     post {
