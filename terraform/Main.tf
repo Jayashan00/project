@@ -8,13 +8,13 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-south-1"   # Mumbai
+  region = "ap-south-1"
 }
 
-# 1. DYNAMIC AMI LOOKUP (Finds the correct Ubuntu image for Mumbai)
+# ------------------ AMI ------------------
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"] # Canonical
+  owners      = ["099720109477"]
 
   filter {
     name   = "name"
@@ -27,10 +27,17 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# 2. SECURITY GROUP (Renamed to v3 to avoid "Duplicate" error)
+# ------------------ SECURITY GROUP ------------------
 resource "aws_security_group" "app_sg" {
-  name        = "srilanka_project_sg_v9"
-  description = "Allow backend and frontend ports"
+  name        = "srilanka_project_sg_v10"
+  description = "Allow SSH, Backend, Frontend"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   ingress {
     from_port   = 5000
@@ -38,18 +45,14 @@ resource "aws_security_group" "app_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   ingress {
     from_port   = 3001
     to_port     = 3001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -58,42 +61,47 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-# 3. EC2 INSTANCE (Using t3.micro for compatibility)
+# ------------------ EC2 ------------------
 resource "aws_instance" "srilanka_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
-
-key_name = "project-key-2025"  # <--- Use the new key name here
+  key_name      = "project-key-2025"
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
-
   user_data = <<-EOF
-      #!/bin/bash
-      apt update -y
-      apt install docker.io -y
-      systemctl start docker
-      systemctl enable docker
+    #!/bin/bash
+    set -e
 
-      # 1. Create a network so containers can talk to each other
-      docker network create app-network
+    apt update -y
+    apt install -y docker.io
+    systemctl start docker
+    systemctl enable docker
+    usermod -aG docker ubuntu
 
-      # 2. Start MongoDB
-      docker run -d --name mongo_db --network app-network mongo:latest
+    sleep 15
 
-      # 3. Start Backend (connected to network)
-      # WE ADDED THE MISSING ENV VARIABLE HERE:
-      docker pull jayashan00/srilanka-backend:latest
-      docker run -d -p 5000:5000 \
-        --name backend \
-        --network app-network \
-        -e MONGODB_URI='mongodb://mongo_db:27017/travel' \
-        jayashan00/srilanka-backend:latest
+    docker network create app-network || true
 
-      # 4. Start Frontend
-      docker pull jayashan00/srilanka-frontend:latest
-      docker run -d -p 3001:80 --name frontend jayashan00/srilanka-frontend:latest
-    EOF
+    docker run -d \
+      --name mongo_db \
+      --network app-network \
+      mongo:latest
+
+    docker pull jayashan00/srilanka-backend:latest
+    docker run -d \
+      --name backend \
+      --network app-network \
+      -p 5000:5000 \
+      -e MONGODB_URI=mongodb://mongo_db:27017/travel \
+      jayashan00/srilanka-backend:latest
+
+    docker pull jayashan00/srilanka-frontend:latest
+    docker run -d \
+      --name frontend \
+      -p 3001:80 \
+      jayashan00/srilanka-frontend:latest
+  EOF
 
   tags = {
     Name = "SriLankaTravelProject"
