@@ -2,18 +2,15 @@ pipeline {
     agent any
 
     environment {
-        GITHUB_REPO = 'https://github.com/Jayashan00/project.git'
-        DOCKERHUB_CREDENTIALS = 'dockerhub-creds'
-        GITHUB_CREDENTIALS = 'github-creds'
-
-        BACKEND_IMAGE = 'jayashan00/srilanka-backend'
+        BACKEND_IMAGE  = 'jayashan00/srilanka-backend'
         FRONTEND_IMAGE = 'jayashan00/srilanka-frontend'
+        DOCKERHUB_CREDS = 'dockerhub-creds'
     }
 
-    stages { // <--- This was missing
+    stages {
+
         stage('Build Backend Image') {
             steps {
-                echo 'Building Backend Docker Image...'
                 sh '''
                     cd server
                     docker build -t ${BACKEND_IMAGE}:latest .
@@ -23,15 +20,19 @@ pipeline {
 
         stage('Build Frontend Image') {
             steps {
-                echo 'Building Frontend Docker Image...'
-                sh 'docker build -t ${FRONTEND_IMAGE}:latest .'
+                sh '''
+                    docker build -t ${FRONTEND_IMAGE}:latest .
+                '''
             }
         }
 
-        stage('Login to DockerHub') {
+        stage('DockerHub Login') {
             steps {
-                echo 'Logging into DockerHub...'
-                withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: DOCKERHUB_CREDS,
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
                     sh 'echo "$PASS" | docker login -u "$USER" --password-stdin'
                 }
             }
@@ -39,7 +40,6 @@ pipeline {
 
         stage('Push Images') {
             steps {
-                echo 'Pushing Backend & Frontend Images to DockerHub...'
                 sh '''
                     docker push ${BACKEND_IMAGE}:latest
                     docker push ${FRONTEND_IMAGE}:latest
@@ -47,19 +47,8 @@ pipeline {
             }
         }
 
-        stage('Terraform Init') {
+        stage('Terraform Init & Apply') {
             steps {
-                echo 'Running Terraform Init...'
-                sh '''
-                    cd terraform
-                    terraform init
-                '''
-            }
-        }
-
-        stage('Terraform Apply') {
-            steps {
-                echo 'Applying Terraform...'
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: 'aws-creds',
@@ -68,54 +57,60 @@ pipeline {
                 ]]) {
                     sh '''
                         cd terraform
+                        terraform init
                         terraform apply -auto-approve
                     '''
                 }
             }
         }
 
-        stage('Deploy to Server') {
+        stage('Deploy on EC2') {
             steps {
-                echo 'Deploying to EC2 Instance...'
                 script {
-                    def server_ip = sh(script: "cd terraform && terraform output -raw public_ip", returnStdout: true).trim()
+                    def ip = sh(
+                        script: "cd terraform && terraform output -raw public_ip",
+                        returnStdout: true
+                    ).trim()
 
                     sshagent(['ec2-ssh-key']) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no ubuntu@${server_ip} '
-                                docker stop backend frontend || true
-                                docker rm backend frontend || true
-                                docker system prune -af
-                                docker pull ${BACKEND_IMAGE}:latest
-                                docker pull ${FRONTEND_IMAGE}:latest
+                        ssh -o StrictHostKeyChecking=no ubuntu@${ip} '
+                            docker network create app-network || true
 
-                                # Ensure network exists
-                                docker network create app-network || true
+                            docker rm -f backend frontend mongo || true
 
-                                docker run -d -p 5000:5000 \
-                                    --name backend \
-                                    --network app-network \
-                                    -e MONGODB_URI="mongodb://mongo_db:27017/travel" \
-                                    ${BACKEND_IMAGE}:latest
+                            docker run -d --name mongo \
+                              --network app-network \
+                              -p 27017:27017 \
+                              mongo:7.0
 
-                                docker run -d -p 3001:80 \
-                                    --name frontend \
-                                    --network app-network \
-                                    ${FRONTEND_IMAGE}:latest
-                            '
+                            docker pull ${BACKEND_IMAGE}:latest
+                            docker pull ${FRONTEND_IMAGE}:latest
+
+                            docker run -d --name backend \
+                              --network app-network \
+                              -p 5000:5000 \
+                              -e MONGODB_URI="mongodb://mongo:27017/travel" \
+                              ${BACKEND_IMAGE}:latest
+
+                            docker run -d --name frontend \
+                              --network app-network \
+                              -p 3001:80 \
+                              ${FRONTEND_IMAGE}:latest
+                        '
                         """
                     }
                 }
             }
         }
-    } // <--- Closing stages
+    }
 
     post {
         success {
-            echo '✅ Pipeline Completed Successfully!'
+            echo '✅ CI/CD Pipeline Completed Successfully'
         }
         failure {
-            echo '❌ Pipeline Failed — Check Logs.'
+            echo '❌ Pipeline Failed — Check Logs'
         }
     }
 }
