@@ -29,7 +29,7 @@ data "aws_ami" "ubuntu" {
 
 # 2. SECURITY GROUP (Renamed to v3 to avoid "Duplicate" error)
 resource "aws_security_group" "app_sg" {
-  name        = "srilanka_project_sg_v8"
+  name        = "srilanka_project_sg_v9"
   description = "Allow backend and frontend ports"
 
   ingress {
