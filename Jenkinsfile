@@ -10,15 +10,7 @@ pipeline {
         FRONTEND_IMAGE = 'jayashan00/srilanka-frontend'
     }
 
-    stages {
 
-        stage('Checkout') {
-            steps {
-                git branch: 'master',
-                    credentialsId: "${GITHUB_CREDENTIALS}",
-                    url: "${GITHUB_REPO}"
-            }
-        }
 
         stage('Build Backend Image') {
             steps {
