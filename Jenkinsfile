@@ -76,9 +76,11 @@ pipeline {
                         sh """
                         ssh -o StrictHostKeyChecking=no ubuntu@${ip} '
                             echo "⏳ Waiting for Docker to be ready..."
-                            until command -v docker >/dev/null 2>&1; do
+                            echo "⏳ Waiting for Docker daemon..."
+                            until sudo docker info >/dev/null 2>&1; do
                                 sleep 5
                             done
+
 
                             sudo docker network create app-network || true
 
