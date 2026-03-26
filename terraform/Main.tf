@@ -11,7 +11,7 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# ------------------ AMI -----------------
+
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"]
@@ -29,7 +29,7 @@ data "aws_ami" "ubuntu" {
 
 # ------------------ SECURITY GROUP ------------------
 resource "aws_security_group" "app_sg" {
-  name        = "srilanka_project_sg_v12"
+  name        = "srilanka_project_sg_v12 "
   description = "Allow SSH, Backend, Frontend"
 
   ingress {
