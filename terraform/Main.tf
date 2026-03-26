@@ -29,7 +29,7 @@ data "aws_ami" "ubuntu" {
 
 # ------------------ SECURITY GROUP ------------------
 resource "aws_security_group" "app_sg" {
-  name        = "srilanka_project_sg_v12 "
+  name        = "srilanka_project_sg_v13 "
   description = "Allow SSH, Backend, Frontend"
 
   ingress {
