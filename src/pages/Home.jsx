@@ -131,7 +131,7 @@ const Home = () => {
                         transition={{ duration: 0.8, delay: 0.2 }}
                         className="text-5xl md:text-7xl font-bold mb-6"
                     >
-                        Discover
+
                         <span className="block bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
                             Sri Lanka
                         </span>
