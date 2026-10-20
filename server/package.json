@@ -5,8 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node init && node index.js",
+    "dev": "node init && nodemon index.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -31,4 +31,3 @@
     "nodemon": "^3.0.1"
   }
 }
-
